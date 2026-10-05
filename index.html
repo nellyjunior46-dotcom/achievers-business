@@ -4388,29 +4388,64 @@ body.modal-open .v23-faq-float{
 (()=>{
   const faqFloat=document.getElementById('v23FaqFloat');
   const closeBtn=document.getElementById('v23FaqClose');
+
+  // Hysteresis:
+  // - first appears at 80%
+  // - stays available while the reader remains below that point
+  // - disappears/reset once they scroll back above the 50% point
+  // - after reset it can appear again when they reach 80%, no refresh needed
   let dismissed=false;
-  let crossed80=false;
+  let activated=false;
 
   const promoOpen=()=>{
     const promo=document.getElementById('v14Popup');
     return !!(promo && promo.classList.contains('show'));
   };
 
+  const setVisible=(visible)=>{
+    if(!faqFloat) return;
+    faqFloat.classList.toggle('show',visible);
+    faqFloat.setAttribute('aria-hidden',visible?'false':'true');
+  };
+
   const syncFaqFloat=()=>{
-    if(!faqFloat || dismissed) return;
+    if(!faqFloat) return;
+
     const max=document.documentElement.scrollHeight-window.innerHeight;
-    if(max<=0) return;
+    if(max<=0){
+      setVisible(false);
+      return;
+    }
+
     const progress=window.scrollY/max;
-    if(progress>=0.80) crossed80=true;
-    const canShow=crossed80 && !promoOpen() && !document.body.classList.contains('modal-open');
-    faqFloat.classList.toggle('show',canShow);
-    faqFloat.setAttribute('aria-hidden',canShow?'false':'true');
+
+    // Returning above the halfway point resets the cycle.
+    if(progress<0.50){
+      activated=false;
+      dismissed=false;
+      setVisible(false);
+      return;
+    }
+
+    // Activate only after the visitor reaches 80%.
+    if(progress>=0.80){
+      activated=true;
+    }
+
+    const canShow=
+      activated &&
+      !dismissed &&
+      !promoOpen() &&
+      !document.body.classList.contains('modal-open');
+
+    setVisible(canShow);
   };
 
   closeBtn?.addEventListener('click',()=>{
+    // Hide for the current visit through the lower part of the page.
+    // Scrolling back above 50% resets this so it can return at 80%.
     dismissed=true;
-    faqFloat?.classList.remove('show');
-    faqFloat?.setAttribute('aria-hidden','true');
+    setVisible(false);
   });
 
   window.addEventListener('scroll',syncFaqFloat,{passive:true});
