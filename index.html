@@ -4001,6 +4001,20 @@ body.modal-open .v23-faq-float{
     </form>
   </div>
 </div>
+<!-- The plain HTML form below uses the same verified FormSubmit POST path as the admin activation test. -->
+<iframe name="v30EmailFrame" id="v30EmailFrame" title="Email form submission" tabindex="-1" aria-hidden="true" style="display:none"></iframe>
+<form id="v30EmailPost" method="POST" action="https://formsubmit.co/achieversclubtz@gmail.com" target="v30EmailFrame" accept-charset="UTF-8" style="display:none" aria-hidden="true">
+  <input type="hidden" name="name">
+  <input type="hidden" name="email">
+  <input type="hidden" name="phone">
+  <input type="hidden" name="business_category">
+  <input type="hidden" name="message">
+  <input type="hidden" name="_subject" value="Achievers Business - New registration enquiry">
+  <input type="hidden" name="_template" value="table">
+  <input type="hidden" name="_url" value="https://achievers-business.vercel.app/">
+  <input type="hidden" name="_honey" value="">
+  <input type="hidden" name="_captcha" value="false">
+</form>
 <script>
 (()=>{
   const preloader=document.getElementById('achPreloader');
@@ -4201,65 +4215,40 @@ body.modal-open .v23-faq-float{
       'Naomba timu ya usajili inielekeze hatua zinazofuata. Asante.'
     ].join('\n');
 
-    // Email backup is independent of pressing Send in WhatsApp.
-    // FormSubmit requires one-time approval from the recipient's inbox.
+    // Use FormSubmit's standard POST route - the same route as the activation test.
+    // Submit into a hidden iframe so the visitor stays on the website while WhatsApp opens.
+    // A submitted request does not guarantee email delivery; confirmation remains in Gmail.
     const status=$('#v30EmailStatus');
     const lang=window.currentLang||'sw';
-    if(status){
-      status.dataset.state='pending';
-      status.textContent=lang==='en'?'Sending your enquiry to our email…':'Tunatuma taarifa zako kwenye email yetu…';
-    }
-    if(!leadForm.dataset.emailBusy){
+    const relay=$('#v30EmailPost');
+    const relayFrame=$('#v30EmailFrame');
+    if(relay && !leadForm.dataset.emailBusy && !leadForm.querySelector('input[name="_honey"]')?.value){
       leadForm.dataset.emailBusy='1';
-      const payload={
-        name:name,
-        email:email,
-        phone:phone,
-        business_category:category,
-        source:'Achievers Business Website',
-        _subject:'Achievers Business — New registration enquiry',
-        _template:'table',
-        _captcha:'false',
-        _honey:leadForm.querySelector('input[name="_honey"]')?.value||'',
-        _url:'https://achievers-business.vercel.app'
-      };
-      fetch('https://formsubmit.co/ajax/achieversclubtz@gmail.com',{
-        method:'POST',
-        headers:{'Content-Type':'application/json','Accept':'application/json'},
-        body:JSON.stringify(payload),
-        keepalive:true
-      }).then(async response=>{
-        if(!response.ok)throw new Error('Email relay HTTP '+response.status);
-        const data=await response.json();
-        const accepted=data.success===true||data.success==='true';
-        if(!accepted){
-          const message=String(data.message||'Email relay rejected request');
-          if(/activat|confirm/i.test(message)){
-            if(status){
-              status.dataset.state='pending';
-              status.textContent=(window.currentLang==='en'
-                ?'Email setup is awaiting verification by Achievers Club. Please also send the WhatsApp message.'
-                :'Email ya Achievers inasubiri kuthibitishwa. Tafadhali tuma ujumbe wa WhatsApp pia.');
-            }
-            return;
-          }
-          throw new Error(message);
-        }
-        if(status){
-          status.dataset.state='success';
-          status.textContent=(window.currentLang==='en'
-            ?'Email request accepted. Remember to send your WhatsApp message.'
-            :'Ombi la email limepokelewa. Kumbuka kutuma ujumbe wa WhatsApp pia.');
-        }
-      }).catch((error)=>{
-        console.warn('Achievers email relay unavailable:',error?.message||'Unknown error');
+      relay.elements.namedItem('name').value=name;
+      relay.elements.namedItem('email').value=email;
+      relay.elements.namedItem('phone').value=phone;
+      relay.elements.namedItem('business_category').value=category;
+      relay.elements.namedItem('message').value='Mteja ameomba maelekezo ya usajili wa biashara ya TZS 2,000,000 kupitia website ya Achievers Club.';
+      if(status){
+        status.dataset.state='pending';
+        status.textContent=lang==='en'
+          ?'Email request submitted. Please send the WhatsApp message too.'
+          :'Tumejaribu kutuma nakala ya taarifa kwenye email. Tafadhali tuma ujumbe wa WhatsApp pia.';
+      }
+      // Attach listener only after the iframe has loaded its initial about:blank page.
+      // Cross-origin iframe content cannot be inspected; do not imply delivery was verified.
+      try{
+        relay.submit();
+      }catch(error){
+        console.warn('Achievers email form could not submit:',error);
         if(status){
           status.dataset.state='error';
           status.textContent=(window.currentLang==='en'
-            ?'Email copy could not be sent. Please send your details on WhatsApp.'
-            :'Email imeshindikana kwa sasa. Tafadhali tuma taarifa zako kupitia WhatsApp.');
+            ?'Email delivery could not start. Please send your details on WhatsApp.'
+            :'Email imeshindikana kuanza kutumwa. Tafadhali tuma taarifa zako kupitia WhatsApp.');
         }
-      }).finally(()=>{delete leadForm.dataset.emailBusy;});
+      }
+      setTimeout(()=>{delete leadForm.dataset.emailBusy},12000);
     }
     // Open immediately within the click event to avoid popup blockers.
     window.open('https://wa.me/255769155771?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
