@@ -3789,6 +3789,10 @@ body.modal-open .v23-faq-float{
 .v30-lead-whatsapp{margin-top:7px;display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;padding:13px 16px;background:#3B7034;border:0;border-radius:12px;color:#fff;font-size:15px;font-weight:650;cursor:pointer;transition:background .18s ease,transform .18s ease}
 .v30-lead-whatsapp:hover{background:#2D5B31}.v30-lead-whatsapp:active{transform:scale(.99)}
 .v30-lead-note{font-size:11.5px;line-height:1.55;color:#758077;margin:13px 0 0;text-align:center}
+.v30-email-status{font-size:12px;line-height:1.45;text-align:center;margin:8px 0 0;min-height:0;color:#4F624F}
+.v30-email-status[data-state="error"]{color:#AE3B2E}
+.v30-email-status[data-state="success"]{color:#2D6636}
+.v30-honeypot{position:absolute!important;left:-99999px!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
 @media(max-width:540px){.v30-lead-overlay{padding:10px;align-items:center}.v30-lead-dialog{padding:24px 20px 22px;border-radius:22px;max-height:calc(100dvh - 20px)}.v30-lead-dialog h2{font-size:28px}}
 @media(prefers-reduced-motion:reduce){.v30-lead-overlay,.v30-lead-dialog,.v30-lead-whatsapp{transition:none!important}}
 </style></head>
@@ -3990,8 +3994,10 @@ body.modal-open .v23-faq-float{
           <option value="Category Nyingine" data-sw="Aina Nyingine za Biashara" data-en="Other Business Categories">Aina Nyingine za Biashara</option>
         </select>
       </div>
+      <input class="v30-honeypot" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true"/>
       <button class="v30-lead-whatsapp" type="submit" data-sw="Wasiliana Nasi WhatsApp →" data-en="Contact us on WhatsApp →">Wasiliana Nasi WhatsApp →</button>
-      <p class="v30-lead-note" data-sw="WhatsApp itafunguka na ujumbe wako tayari. Bonyeza Tuma ndani ya WhatsApp ili taarifa zako zitufikie." data-en="WhatsApp opens with your message ready. Tap Send in WhatsApp to share your details.">WhatsApp itafunguka na ujumbe wako tayari. Bonyeza Tuma ndani ya WhatsApp ili taarifa zako zitufikie.</p>
+      <p class="v30-lead-note" data-sw="Ukibonyeza, taarifa zako zitatumwa pia kwa Achievers Club kupitia email. WhatsApp itafunguka na ujumbe tayari; bonyeza Tuma ndani ya WhatsApp." data-en="By clicking, your details will also be emailed to Achievers Club. WhatsApp will open with your message ready; tap Send there.">Ukibonyeza, taarifa zako zitatumwa pia kwa Achievers Club kupitia email. WhatsApp itafunguka na ujumbe tayari; bonyeza Tuma ndani ya WhatsApp.</p>
+      <p id="v30EmailStatus" class="v30-email-status" role="status" aria-live="polite"></p>
     </form>
   </div>
 </div>
@@ -4194,6 +4200,54 @@ body.modal-open .v23-faq-float{
       '',
       'Naomba timu ya usajili inielekeze hatua zinazofuata. Asante.'
     ].join('\n');
+
+    // Email backup is independent of pressing Send in WhatsApp.
+    // FormSubmit requires one-time approval from the recipient's inbox.
+    const status=$('#v30EmailStatus');
+    const lang=window.currentLang||'sw';
+    if(status){
+      status.dataset.state='pending';
+      status.textContent=lang==='en'?'Sending your enquiry to our email…':'Tunatuma taarifa zako kwenye email yetu…';
+    }
+    if(!leadForm.dataset.emailBusy){
+      leadForm.dataset.emailBusy='1';
+      const payload={
+        name:name,
+        email:email,
+        phone:phone,
+        business_category:category,
+        source:'Achievers Business Website',
+        _subject:'Achievers Business — New registration enquiry',
+        _template:'table',
+        _captcha:'false',
+        _honey:leadForm.querySelector('input[name="_honey"]')?.value||'',
+        _url:'https://achievers-business.vercel.app'
+      };
+      fetch('https://formsubmit.co/ajax/achieversclubtz@gmail.com',{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Accept':'application/json'},
+        body:JSON.stringify(payload),
+        keepalive:true
+      }).then(async response=>{
+        if(!response.ok)throw new Error('Email relay HTTP '+response.status);
+        const data=await response.json();
+        if(data.success===false||data.success==='false')throw new Error(data.message||'Email relay rejected request');
+        if(status){
+          status.dataset.state='success';
+          status.textContent=(window.currentLang==='en'
+            ?'Email request accepted. Remember to send your WhatsApp message.'
+            :'Ombi la email limepokelewa. Kumbuka kutuma ujumbe wa WhatsApp pia.');
+        }
+      }).catch(()=>{
+        if(status){
+          status.dataset.state='error';
+          status.textContent=(window.currentLang==='en'
+            ?'Email copy could not be sent. Please send your details on WhatsApp.'
+            :'Email imeshindikana kwa sasa. Tafadhali tuma taarifa zako kupitia WhatsApp.');
+        }
+      }).finally(()=>{delete leadForm.dataset.emailBusy;});
+    }
+    // Open immediately within the click event to avoid popup blockers.
     window.open('https://wa.me/255673259420?text='+encodeURIComponent(message),'_blank','noopener,noreferrer');
   });
   $('#v30LeadPhone')?.addEventListener('input',e=>e.target.setCustomValidity(''));
