@@ -3784,8 +3784,8 @@ body.modal-open .v23-faq-float{
 .v30-lead-category strong{color:#2B6130;margin-left:5px}
 .v30-lead-field{margin-bottom:14px}
 .v30-lead-field label{display:block;font-size:13px;font-weight:600;color:#26372A;margin:0 0 7px}
-.v30-lead-field input{display:block;width:100%;min-height:51px;border:1px solid #DDE6DD;border-radius:12px;background:#FAFBF9;padding:12px 14px;color:#16241A;font:inherit;font-size:16px;outline:none}
-.v30-lead-field input:focus{border-color:#3B7034;box-shadow:0 0 0 3px rgba(59,112,52,.11);background:#fff}
+.v30-lead-field input,.v30-lead-field select{display:block;width:100%;min-height:51px;border:1px solid #DDE6DD;border-radius:12px;background:#FAFBF9;padding:12px 14px;color:#16241A;font:inherit;font-size:16px;outline:none}
+.v30-lead-field input:focus,.v30-lead-field select:focus{border-color:#3B7034;box-shadow:0 0 0 3px rgba(59,112,52,.11);background:#fff}
 .v30-lead-whatsapp{margin-top:7px;display:flex;align-items:center;justify-content:center;width:100%;min-height:54px;padding:13px 16px;background:#3B7034;border:0;border-radius:12px;color:#fff;font-size:15px;font-weight:650;cursor:pointer;transition:background .18s ease,transform .18s ease}
 .v30-lead-whatsapp:hover{background:#2D5B31}.v30-lead-whatsapp:active{transform:scale(.99)}
 .v30-lead-note{font-size:11.5px;line-height:1.55;color:#758077;margin:13px 0 0;text-align:center}
@@ -3975,12 +3975,21 @@ body.modal-open .v23-faq-float{
     <button aria-label="Funga" type="button" class="v30-lead-close" id="v14CloseStart">×</button>
     <div class="v30-lead-eyebrow" data-sw="ANZA HAPA" data-en="START HERE">ANZA HAPA</div>
     <h2 id="v30LeadTitle" data-sw="Tuko hapa kukusaidia kuanza biashara." data-en="We're here to help you start your business.">Tuko hapa kukusaidia kuanza biashara.</h2>
-    <p class="v30-lead-description" data-sw="Jaza taarifa hizi tatu tu, kisha tuwasiliane WhatsApp. Timu yetu itakuongoza hatua zinazofuata za usajili." data-en="Enter just these three details, then chat with us on WhatsApp. Our team will guide you through registration.">Jaza taarifa hizi tatu tu, kisha tuwasiliane WhatsApp. Timu yetu itakuongoza hatua zinazofuata za usajili.</p>
-    <div class="v30-lead-category" id="v30LeadCategoryWrap" hidden><span data-sw="Biashara uliyochagua:" data-en="Selected category:">Biashara uliyochagua:</span> <strong id="v30LeadCategory"></strong></div>
+    <p class="v30-lead-description" data-sw="Jaza taarifa zako na uchague aina ya biashara, kisha tuwasiliane WhatsApp. Timu yetu itakuongoza kwenye hatua zinazofuata za usajili." data-en="Enter your details and choose a business category, then contact us on WhatsApp. Our team will guide you through registration.">Jaza taarifa zako na uchague aina ya biashara, kisha tuwasiliane WhatsApp. Timu yetu itakuongoza kwenye hatua zinazofuata za usajili.</p>
     <form id="v30WhatsAppLeadForm" autocomplete="on">
       <div class="v30-lead-field"><label for="v30LeadName" data-sw="Jina lako" data-en="Full name">Jina lako</label><input id="v30LeadName" name="fullName" type="text" autocomplete="name" minlength="2" maxlength="100" required placeholder="Jina kamili" data-ph-sw="Jina kamili" data-ph-en="Your full name"/></div>
       <div class="v30-lead-field"><label for="v30LeadEmail" data-sw="Email yako" data-en="Email address">Email yako</label><input id="v30LeadEmail" name="email" type="email" autocomplete="email" maxlength="254" required placeholder="example@email.com" data-ph-sw="example@email.com" data-ph-en="example@email.com"/></div>
       <div class="v30-lead-field"><label for="v30LeadPhone" data-sw="Namba ya simu" data-en="Phone number">Namba ya simu</label><input id="v30LeadPhone" name="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="22" required placeholder="07XX XXX XXX" data-ph-sw="07XX XXX XXX" data-ph-en="+255 7XX XXX XXX"/></div>
+      <div class="v30-lead-field">
+        <label for="v30LeadBusiness" data-sw="Aina ya biashara" data-en="Business category">Aina ya biashara</label>
+        <select id="v30LeadBusiness" name="businessCategory" required>
+          <option value="" disabled selected data-sw="Chagua aina ya biashara" data-en="Select a business category">Chagua aina ya biashara</option>
+          <option value="Afya na Ustawi" data-sw="Afya na Ustawi" data-en="Health &amp; Wellness">Afya na Ustawi</option>
+          <option value="Urembo na Huduma Binafsi" data-sw="Urembo na Huduma Binafsi" data-en="Beauty &amp; Personal Care">Urembo na Huduma Binafsi</option>
+          <option value="Kilimo" data-sw="Kilimo" data-en="Agriculture">Kilimo</option>
+          <option value="Category Nyingine" data-sw="Aina Nyingine za Biashara" data-en="Other Business Categories">Aina Nyingine za Biashara</option>
+        </select>
+      </div>
       <button class="v30-lead-whatsapp" type="submit" data-sw="Wasiliana Nasi WhatsApp →" data-en="Contact us on WhatsApp →">Wasiliana Nasi WhatsApp →</button>
       <p class="v30-lead-note" data-sw="WhatsApp itafunguka na ujumbe wako tayari. Bonyeza Tuma ndani ya WhatsApp ili taarifa zako zitufikie." data-en="WhatsApp opens with your message ready. Tap Send in WhatsApp to share your details.">WhatsApp itafunguka na ujumbe wako tayari. Bonyeza Tuma ndani ya WhatsApp ili taarifa zako zitufikie.</p>
     </form>
@@ -4105,17 +4114,20 @@ body.modal-open .v23-faq-float{
   [sold,markup,order].forEach(el=>el&&el.addEventListener('input',renderMath));
   renderMath();
 
-  // Category selection remains optional for WhatsApp enquiry.
+  // Business category is required in WhatsApp enquiry; page selection syncs to the form.
   let selectedCategory='';
   const categories=$$('.v14-category');
   const categoryLabel=$('#v14SelectedCategory');
   const registerBtn=$('#v14RegisterBtn');
-  const leadCatWrap=$('#v30LeadCategoryWrap');
-  const leadCatText=$('#v30LeadCategory');
+  const businessSelect=$('#v30LeadBusiness');
   const syncCategory=()=>{
-    if(leadCatWrap)leadCatWrap.hidden=!selectedCategory;
-    if(leadCatText)leadCatText.textContent=selectedCategory;
+    if(businessSelect)businessSelect.value=selectedCategory;
   };
+  businessSelect?.addEventListener('change',()=>{
+    selectedCategory=businessSelect.value;
+    categories.forEach(x=>x.classList.toggle('selected',x.dataset.category===selectedCategory));
+    if(categoryLabel)categoryLabel.textContent=selectedCategory;
+  });
   categories.forEach(card=>card.addEventListener('click',()=>{
     categories.forEach(x=>x.classList.remove('selected'));
     card.classList.add('selected');
@@ -4152,7 +4164,7 @@ body.modal-open .v23-faq-float{
   overlay?.addEventListener('click',e=>{if(e.target===overlay)closeStart()});
   leadDialog?.addEventListener('keydown',e=>{
     if(e.key!=='Tab')return;
-    const focusables=[...leadDialog.querySelectorAll('button:not([disabled]),input:not([disabled])')];
+    const focusables=[...leadDialog.querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled])')];
     if(!focusables.length)return;
     const first=focusables[0],last=focusables[focusables.length-1];
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
@@ -4170,14 +4182,15 @@ body.modal-open .v23-faq-float{
         ? (window.currentLang==='en'?'Enter a valid phone number.':'Weka namba sahihi ya simu.'):'');
       if(!phoneInput.reportValidity())return;
     }
-    if(!name||!email||!phone)return;
+    const category=businessSelect?.value||'';
+    if(!name||!email||!phone||!category){businessSelect?.reportValidity();return;}
     const message=[
       'Habari Achievers Club! Nataka kuanza biashara ya TZS 2,000,000 na kuongozwa kuhusu usajili.',
       '',
       'Jina: '+name,
       'Email: '+email,
       'Namba ya simu: '+phone,
-      'Aina ya biashara: '+(selectedCategory||'Bado sijachagua'),
+      'Aina ya biashara: '+category,
       '',
       'Naomba timu ya usajili inielekeze hatua zinazofuata. Asante.'
     ].join('\n');
