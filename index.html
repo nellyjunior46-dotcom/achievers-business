@@ -4231,14 +4231,28 @@ body.modal-open .v23-faq-float{
       }).then(async response=>{
         if(!response.ok)throw new Error('Email relay HTTP '+response.status);
         const data=await response.json();
-        if(data.success===false||data.success==='false')throw new Error(data.message||'Email relay rejected request');
+        const accepted=data.success===true||data.success==='true';
+        if(!accepted){
+          const message=String(data.message||'Email relay rejected request');
+          if(/activat|confirm/i.test(message)){
+            if(status){
+              status.dataset.state='pending';
+              status.textContent=(window.currentLang==='en'
+                ?'Email setup is awaiting verification by Achievers Club. Please also send the WhatsApp message.'
+                :'Email ya Achievers inasubiri kuthibitishwa. Tafadhali tuma ujumbe wa WhatsApp pia.');
+            }
+            return;
+          }
+          throw new Error(message);
+        }
         if(status){
           status.dataset.state='success';
           status.textContent=(window.currentLang==='en'
             ?'Email request accepted. Remember to send your WhatsApp message.'
             :'Ombi la email limepokelewa. Kumbuka kutuma ujumbe wa WhatsApp pia.');
         }
-      }).catch(()=>{
+      }).catch((error)=>{
+        console.warn('Achievers email relay unavailable:',error?.message||'Unknown error');
         if(status){
           status.dataset.state='error';
           status.textContent=(window.currentLang==='en'
