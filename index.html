@@ -4179,7 +4179,7 @@ body.modal-open .v23-faq-float{
     if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
     else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
   });
-  leadForm?.addEventListener('submit',async e=>{
+  leadForm?.addEventListener('submit',e=>{
     e.preventDefault();
     const name=$('#v30LeadName')?.value.trim()||'';
     const email=$('#v30LeadEmail')?.value.trim()||'';
@@ -4193,6 +4193,8 @@ body.modal-open .v23-faq-float{
     }
     const category=businessSelect?.value||'';
     if(!name||!email||!phone||!category){businessSelect?.reportValidity();return;}
+    if(leadForm.querySelector('input[name="_honey"]')?.value)return;
+
     const message=[
       'Habari Achievers Club! Nataka kuanza biashara ya TZS 2,000,000 na kuongozwa kuhusu usajili.',
       '',
@@ -4206,73 +4208,71 @@ body.modal-open .v23-faq-float{
     const whatsappUrl='https://wa.me/255769155771?text='+encodeURIComponent(message);
     const status=$('#v30EmailStatus');
     const fallback=$('#v30WhatsAppFallback');
-    const submitBtn=leadForm.querySelector('button[type="submit"]');
     const lang=window.currentLang||'sw';
-    // Diagnostic mode stays on the page so staff can read the email provider's response.
     const diagnostic=new URLSearchParams(window.location.search).has('emailtest');
-    if(fallback){fallback.href=whatsappUrl;fallback.hidden=true;}
-    if(leadForm.dataset.emailBusy==='1')return;
-    if(leadForm.querySelector('input[name="_honey"]')?.value)return;
+    if(fallback){fallback.href=whatsappUrl;fallback.hidden=false;}
+    if(leadForm.dataset.emailBusy==='1'){
+      // Do not submit duplicate emails on repeated clicks; WhatsApp link remains accessible.
+      if(!diagnostic)window.open(whatsappUrl,'_blank','noopener,noreferrer');
+      return;
+    }
     leadForm.dataset.emailBusy='1';
-    if(submitBtn){submitBtn.disabled=true;submitBtn.textContent=lang==='en'?'Sending details…':'Tunatuma taarifa…';}
-    if(status){status.dataset.state='pending';status.textContent=lang==='en'
-      ?'Checking email submission before opening WhatsApp…'
-      :'Tunahakikisha taarifa zimepokelewa kabla ya kufungua WhatsApp…';}
-    try{
-      const controller=new AbortController();
-      const limit=setTimeout(()=>controller.abort(),15000);
-      let response;
-      try {
-        response=await fetch('https://formsubmit.co/ajax/achieversclubtz@gmail.com',{
-          method:'POST',
-          headers:{'Content-Type':'application/json','Accept':'application/json'},
-          body:JSON.stringify({
-            name,email,phone,business_category:category,
-            message:'Ombi la usajili wa biashara ya TZS 2,000,000 kupitia Achievers Club.',
-            _subject:'Achievers Business - New registration enquiry',
-            _template:'table',
-            _captcha:'false',
-            _honey:'',
-            _url:'https://achievers-business.vercel.app/'
-          }),
-          signal:controller.signal
-        });
-      }finally{clearTimeout(limit);}
-      const data=await response.json();
-      // FormSubmit sometimes responds HTTP 200 with success:"false"; do not misread it as accepted.
-      if(!response.ok||!(data.success===true||data.success==='true')){
-        throw new Error(String(data.message||'Email provider rejected the submission'));
+    if(status){
+      status.dataset.state='pending';
+      status.textContent=lang==='en'
+        ?'Your details are being submitted to Achievers email. Remember to press Send in WhatsApp.'
+        :'Taarifa zako zinajaribiwa kutumwa kwenye email ya Achievers. Kumbuka kubonyeza Tuma WhatsApp.';
+    }
+
+    // Start an independent email copy without blocking WhatsApp.
+    // A browser/network error may happen after email delivery: treat it as unverified, not certainly failed.
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),15000);
+    fetch('https://formsubmit.co/ajax/achieversclubtz@gmail.com',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({
+        name,email,phone,business_category:category,
+        message:'Ombi la usajili wa biashara ya TZS 2,000,000 kupitia Achievers Club.',
+        _subject:'Achievers Business - New registration enquiry',
+        _template:'table',
+        _captcha:'false',
+        _honey:'',
+        _url:'https://achievers-business.vercel.app/'
+      }),
+      keepalive:true,
+      signal:controller.signal
+    }).then(async response=>{
+      let data;
+      try{data=await response.json()}catch(_){throw new Error('No readable email confirmation');}
+      if(!response.ok || !(data.success===true||data.success==='true')){
+        throw new Error(String(data.message||'Email provider did not confirm the request'));
       }
       if(status){
         status.dataset.state='success';
         status.textContent=(window.currentLang==='en'
-          ?'Email provider accepted your details. Opening WhatsApp…'
-          :'Mfumo wa email umepokea taarifa zako. Tunafungua WhatsApp…');
+          ?'Email provider accepted your details. Please send your WhatsApp message.'
+          :'Mfumo wa email umekubali taarifa zako. Tafadhali tuma ujumbe wa WhatsApp.');
+        if(diagnostic)status.textContent+=' [TEST: success = true]';
       }
-      if(diagnostic){
-        if(status)status.textContent+=' [TEST: success = true]';
-        if(fallback)fallback.hidden=false;
-      }else{
-        // Only navigate after FormSubmit has acknowledged the message.
-        window.location.assign(whatsappUrl);
-      }
-    }catch(error){
-      console.error('Achievers registration email rejected:',error);
+    }).catch(error=>{
+      // FormSubmit may have received the POST despite a CORS/response error.
+      console.warn('Achievers email receipt not verifiable:',error?.message||error);
       if(status){
-        status.dataset.state='error';
-        const reason=diagnostic?' ['+String(error?.message||error).slice(0,180)+']':'';
+        status.dataset.state='pending';
         status.textContent=(window.currentLang==='en'
-          ?'Email submission failed. Your details have not been confirmed by email. Please send them via WhatsApp.'
-          :'Email haijathibitisha kupokea taarifa. Tafadhali zitume kupitia WhatsApp.')+reason;
+          ?'Email delivery could not be verified. Please send your details on WhatsApp.'
+          :'Hatujaweza kuthibitisha email imefika. Tafadhali tuma taarifa zako WhatsApp.')+
+          (diagnostic?' ['+String(error?.message||error).slice(0,160)+']':'');
       }
-      if(fallback)fallback.hidden=false;
-    }finally{
+    }).finally(()=>{
+      clearTimeout(timeout);
       delete leadForm.dataset.emailBusy;
-      if(submitBtn){
-        submitBtn.disabled=false;
-        submitBtn.textContent=window.currentLang==='en'?'Contact us on WhatsApp →':'Wasiliana Nasi WhatsApp →';
-      }
-    }
+    });
+
+    // Open WhatsApp synchronously during the submit click, regardless of the email response.
+    // Diagnostic mode stays on the page to show the email status to the site administrator.
+    if(!diagnostic)window.open(whatsappUrl,'_blank','noopener,noreferrer');
   });
   $('#v30LeadPhone')?.addEventListener('input',e=>e.target.setCustomValidity(''));
 
