@@ -3791,8 +3791,23 @@ body.modal-open .v23-faq-float{
 .v30-honeypot{position:absolute!important;left:-99999px!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important}
 @media(max-width:540px){.v30-lead-overlay{padding:10px;align-items:center}.v30-lead-dialog{padding:24px 20px 22px;border-radius:22px;max-height:calc(100dvh - 20px)}.v30-lead-dialog h2{font-size:28px}}
 @media(prefers-reduced-motion:reduce){.v30-lead-overlay,.v30-lead-dialog,.v30-lead-whatsapp{transition:none!important}}
-</style></head>
+</style><!-- Meta Pixel Code: Achievers Club Business Opportunity -->
+<script>
+!function(f,b,e,v,n,t,s)
+{if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+n.queue=[];t=b.createElement(e);t.async=!0;
+t.src=v;s=b.getElementsByTagName(e)[0];
+s.parentNode.insertBefore(t,s)}(window, document,'script',
+'https://connect.facebook.net/en_US/fbevents.js');
+fbq('init', '1608658074441878');
+fbq('track', 'PageView');
+</script>
+<!-- End Meta Pixel Code -->
+</head>
 <body class="loaded">
+<noscript><img height="1" width="1" style="display:none" alt="" src="https://www.facebook.com/tr?id=1608658074441878&amp;ev=PageView&amp;noscript=1"></noscript>
 <div aria-hidden="true" class="ambient-orb"></div>
 <div aria-hidden="true" class="scroll-progress" id="scrollProgress"></div>
 <nav class="nav">
@@ -4186,6 +4201,13 @@ body.modal-open .v23-faq-float{
     const category=businessSelect?.value||'';
     if(!name||!email||!phone||!category){businessSelect?.reportValidity();return;}
     if(leadForm.querySelector('input[name="_honey"]')?.value)return;
+
+    // Counts a completed, validated enquiry form. This is not a confirmed WhatsApp message
+    // or a paid TZS 2M registration. Never send name, email or phone to Meta.
+    if(window.fbq && !leadForm.dataset.metaLeadTracked){
+      window.fbq('track','Lead');
+      leadForm.dataset.metaLeadTracked='1';
+    }
 
     const message=[
       'Habari Achievers Club! Nataka kuanza biashara ya TZS 2,000,000 na kuongozwa kuhusu usajili.',
