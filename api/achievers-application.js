@@ -74,10 +74,17 @@ async function fillOfficialPDF(data){
     const v=text(value,200);
     if(!v)continue;
     const field=form.getTextField(name);
+    // The official PDF uses comb boxes with limits as low as 5-21 characters.
+    // Keep the COMPLETE value: disable combs for longer content instead of
+    // silently dropping a long email, address, name or bank account detail.
+    const limit=field.getMaxLength();
+    if(limit!==undefined && v.length>limit){
+      field.disableCombing();
+      field.removeMaxLength();
+    }
     field.setText(v);
-    if(v.length>44)field.setFontSize(8.5);
-    else if(v.length>26)field.setFontSize(10);
-    else field.setFontSize(11);
+    const size=v.length>100?5:v.length>75?6:v.length>48?7:v.length>30?8.5:11;
+    try{field.setFontSize(size)}catch(_){ /* some source widgets use custom DA */ }
   }
   const checkboxNames=[
     data.collectAtCentre==='yes'?'Collect yes':'Collect No',
