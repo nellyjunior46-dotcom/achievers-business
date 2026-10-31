@@ -1,0 +1,12 @@
+{
+  "name": "achievers-business",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Achievers Club Tanzania website and private application processing",
+  "dependencies": {
+    "pdf-lib": "1.17.1"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
