@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#ffffff">
+<title>Achievers Application Form</title>
+<style>
+:root{--ink:#14221a;--soft:#657267;--green:#2f653c;--line:#e6ebe6;--bg:#ffffff;--subtle:#f7f9f6;--err:#b42318}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:#fff;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.page{width:min(880px,calc(100% - 40px));margin:0 auto;padding:62px 0 80px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:18px;padding-bottom:31px;border-bottom:1px solid var(--line)}
+.identity{display:flex;align-items:center;gap:12px}
+.mark{width:37px;height:37px;border:1px solid #cdddcf;border-radius:12px;display:grid;place-items:center;font-size:18px;font-weight:700;color:var(--green)}
+.identity strong{font-size:13px;letter-spacing:.12em;color:var(--green);font-weight:750}
+.kicker{font-size:11px;color:#78837b;letter-spacing:.16em;text-transform:uppercase;font-weight:700}
+h1{font-size:clamp(36px,6vw,55px);line-height:1.09;letter-spacing:-.045em;font-weight:630;margin:29px 0 12px}
+.intro{font-size:15px;color:var(--soft);line-height:1.7;max-width:635px;margin:0 0 34px}
+.form-section{padding:37px 0 35px;border-top:1px solid var(--line)}
+.section-head{display:flex;gap:17px;align-items:flex-start;margin-bottom:25px}
+.section-number{font-size:12px;color:var(--green);border:1px solid #cfe1d0;border-radius:9px;min-width:38px;height:34px;display:grid;place-items:center;font-weight:750}
+.section-head h2{font-size:22px;line-height:1.25;letter-spacing:-.025em;margin:1px 0 6px;font-weight:650}
+.section-head p{font-size:13px;color:var(--soft);margin:0;line-height:1.6}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 18px}
+.full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:8px}
+.field label,.field legend{font-size:12.5px;font-weight:640;color:#263b2c}
+.required{color:#3d8246}
+input:not([type=radio]):not([type=checkbox]),select,textarea{display:block;min-width:0;width:100%;height:50px;border:1px solid #d8e1da;background:#fff;border-radius:10px;padding:0 14px;color:#1e2c21;outline:none;transition:border .15s,box-shadow .15s;font-size:14px}
+textarea{height:auto;min-height:86px;resize:vertical;padding:12px 14px;line-height:1.55}
+input:focus,select:focus,textarea:focus{border-color:var(--green)!important;box-shadow:0 0 0 3px rgba(52,116,64,.11)}
+input::placeholder,textarea::placeholder{color:#a0a9a1}
+.field small{color:#7a877c;font-size:11.5px;line-height:1.4}
+.choice-label{font-size:12.5px;font-weight:640;display:block;margin-bottom:11px}
+.choices{display:flex;flex-wrap:wrap;gap:10px}
+.choice{display:flex;align-items:center;gap:9px;min-height:45px;padding:9px 15px;border-radius:10px;border:1px solid #dce4dd;cursor:pointer;font-size:13px;color:#3b493d;background:#fff}
+.choice:has(input:checked){border-color:#44824c;background:#f4f9f4;color:#20592d}
+.choice input{accent-color:#34763f;width:16px;height:16px}
+.option-content{border:1px solid var(--line);border-radius:14px;padding:22px;margin-top:16px;background:#fdfefd}
+.option-content[hidden]{display:none}
+.option-content .grid{gap:17px}
+.inline-note{display:flex;align-items:flex-start;gap:10px;padding:13px 16px;border:1px solid #e1e9df;border-radius:11px;background:#f8faf7;font-size:12px;line-height:1.6;color:#657366;margin:23px 0 0}
+.inline-note .circle{font-weight:700;color:var(--green)}
+.bottom{border-top:1px solid var(--line);padding:28px 0 0}
+.consent{display:flex;gap:11px;align-items:flex-start;cursor:pointer;font-size:12.5px;color:#657366;line-height:1.6;max-width:780px}
+.consent input{accent-color:var(--green);height:17px;width:17px;flex-shrink:0;margin-top:2px}
+.action-line{display:flex;justify-content:space-between;gap:20px;align-items:center;margin-top:24px}
+.footnote{color:#829084;font-size:12px;line-height:1.5;max-width:340px}
+.btn{padding:0 25px;min-height:54px;display:inline-flex;align-items:center;justify-content:center;gap:16px;border:0;border-radius:11px;background:var(--green);color:#fff;font-weight:680;font-size:14px;transition:background .2s,opacity .2s}
+.btn:hover{background:#24522e}.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{font-size:13px;margin:16px 0 0;color:#48624e;line-height:1.7}
+.status.error{color:var(--err)}
+.footer{padding:26px 0 0;margin-top:32px;border-top:1px solid var(--line);font-size:11px;color:#9aa69c}
+.honeypot{position:absolute!important;left:-10000px!important;opacity:0!important;height:1px!important;width:1px!important;pointer-events:none!important}
+@media(max-width:640px){.page{width:calc(100% - 32px);padding:31px 0 48px}.top{padding-bottom:22px}.grid{grid-template-columns:1fr;gap:16px}.full{grid-column:auto}.form-section{padding:29px 0}.section-head h2{font-size:20px}.action-line{flex-direction:column-reverse;align-items:stretch}.btn{width:100%}.footnote{text-align:center;max-width:none}.option-content{padding:15px}}
+</style>
+</head>
+<body>
+<main class="page">
+  <header class="top">
+    <div class="identity"><div class="mark" aria-hidden="true">A</div><strong>ACHIEVERS CLUB</strong></div>
+    <span class="kicker">Application / TZ</span>
+  </header>
+  <h1>Achievers<br>Application Form</h1>
+  <p class="intro">Please complete the application details below accurately. Your submitted information will be prepared for Achievers Office to complete the remaining administrative sections.</p>
+  <form id="application" autocomplete="on">
+    <section class="form-section" aria-labelledby="applicantTitle">
+      <div class="section-head"><span class="section-number">01</span><div><h2 id="applicantTitle">Applicant Details</h2><p>Personal information and contact details.</p></div></div>
+      <div class="grid">
+        <div class="field"><label for="surname">Surname <span class="required">*</span></label><input required id="surname" name="surname" maxlength="75" autocomplete="family-name" placeholder="Surname"></div>
+        <div class="field"><label for="firstNames">First Names <span class="required">*</span></label><input required id="firstNames" name="firstNames" maxlength="90" autocomplete="given-name" placeholder="First and middle names"></div>
+        <div class="field"><label for="applicantId">ID Number / Passport Number <span class="required">*</span></label><input required id="applicantId" name="applicantId" maxlength="45" autocomplete="off" placeholder="ID or passport number"></div>
+        <div class="field"><label for="dateOfBirth">Date of Birth <span class="required">*</span></label><input required id="dateOfBirth" name="dateOfBirth" type="date" autocomplete="bday" max="2026-10-31"></div>
+        <div class="field"><label for="email">Email Address <span class="required">*</span></label><input required type="email" id="email" name="email" maxlength="180" autocomplete="email" placeholder="name@example.com"></div>
+        <div class="field"><label for="mobile">Mobile Number <span class="required">*</span></label><input required type="tel" id="mobile" name="mobile" inputmode="tel" maxlength="24" autocomplete="tel" placeholder="07XX XXX XXX"></div>
+      </div>
+      <div style="height:1px;background:var(--line);margin:29px 0 25px"></div>
+      <div class="section-head" style="margin-bottom:21px"><div><h2 style="font-size:18px">Partner Information <span style="font-size:12px;font-weight:400;color:var(--soft)">(if applicable)</span></h2><p>Leave blank if you are applying individually.</p></div></div>
+      <div class="grid">
+        <div class="field"><label for="partnerName">Partner’s Name</label><input id="partnerName" name="partnerName" maxlength="90" placeholder="Full name"></div>
+        <div class="field"><label for="partnerMobile">Partner’s Mobile</label><input id="partnerMobile" name="partnerMobile" type="tel" maxlength="24" inputmode="tel" placeholder="07XX XXX XXX"></div>
+        <div class="field"><label for="partnerEmail">Partner’s Email</label><input id="partnerEmail" name="partnerEmail" type="email" maxlength="180" placeholder="name@example.com"></div>
+        <div class="field"><label for="partnerId">Partner’s ID / Passport Number</label><input id="partnerId" name="partnerId" maxlength="45" placeholder="ID or passport number"></div>
+        <div class="field"><label for="partnerDob">Partner’s Date of Birth</label><input id="partnerDob" name="partnerDob" type="date" max="2026-10-31"></div>
+      </div>
+      <div style="height:1px;background:var(--line);margin:29px 0 25px"></div>
+      <div class="section-head" style="margin-bottom:20px"><div><h2 style="font-size:18px">Collection &amp; Delivery</h2><p>How will you receive your business package?</p></div></div>
+      <div class="grid">
+        <fieldset class="field full" style="margin:0;padding:0;border:0"><legend class="choice-label">Collect at Distributor Centre? <span class="required">*</span></legend>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="collectAtCentre" value="yes" required> Yes</label>
+            <label class="choice"><input type="radio" name="collectAtCentre" value="no" required> No</label>
+          </div>
+        </fieldset>
+        <div class="field full"><label for="deliveryAddress">Delivery Address <span class="required">*</span></label><textarea required id="deliveryAddress" name="deliveryAddress" maxlength="240" placeholder="Street / location, city or town, region"></textarea></div>
+        <div class="field"><label for="deliveryAddress2">Additional Address Information</label><input id="deliveryAddress2" name="deliveryAddress2" maxlength="100" placeholder="Building / landmark (optional)"></div>
+        <div class="field"><label for="postalCode">Postal Code</label><input id="postalCode" name="postalCode" maxlength="18" placeholder="Postal code (optional)"></div>
+        <fieldset class="field full" style="margin:0;padding:0;border:0"><legend class="choice-label">Physical Address same as Delivery Address? <span class="required">*</span></legend>
+          <div class="choices">
+            <label class="choice"><input type="radio" name="physicalSame" value="yes" required> Yes</label>
+            <label class="choice"><input type="radio" name="physicalSame" value="no" required> No</label>
+          </div>
+        </fieldset>
+      </div>
+    </section>
+    <section class="form-section" aria-labelledby="paymentTitle">
+      <div class="section-head"><span class="section-number">02</span><div><h2 id="paymentTitle">Payment Details</h2><p>For commission payouts. Please select either bank transfer (EFT) or mobile payout.</p></div></div>
+      <fieldset style="margin:0;padding:0;border:0"><legend class="choice-label">Preferred Payout Method <span class="required">*</span></legend>
+        <div class="choices">
+          <label class="choice"><input type="radio" name="paymentMethod" value="eft" required> A. Bank Transfer (EFT)</label>
+          <label class="choice"><input type="radio" name="paymentMethod" value="mobile" required> B. Mobile Money</label>
+        </div>
+      </fieldset>
+      <div class="option-content" id="eftFields" hidden>
+        <div class="grid">
+          <div class="field"><label for="bankName">Bank Name <span class="required">*</span></label><input id="bankName" name="bankName" maxlength="80"></div>
+          <div class="field"><label for="accountName">Account Name <span class="required">*</span></label><input id="accountName" name="accountName" maxlength="90"></div>
+          <div class="field full"><label for="accountNo">Account Number <span class="required">*</span></label><input id="accountNo" name="accountNo" maxlength="50" inputmode="numeric"></div>
+          <div class="field"><label for="branchCode">Branch Code <span class="required">*</span></label><input id="branchCode" name="branchCode" maxlength="40"></div>
+          <div class="field"><label for="branchName">Branch Name <span class="required">*</span></label><input id="branchName" name="branchName" maxlength="80"></div>
+          <fieldset class="field full" style="margin:0;padding:0;border:0"><legend class="choice-label">Account Type <span class="required">*</span></legend>
+            <div class="choices"><label class="choice"><input type="radio" name="accountType" value="cheque"> Cheque</label><label class="choice"><input type="radio" name="accountType" value="savings"> Savings</label></div>
+          </fieldset>
+        </div>
+      </div>
+      <div class="option-content" id="mobileFields" hidden>
+        <div class="grid">
+          <div class="field"><label for="payoutMobile">Payout Mobile Number <span class="required">*</span></label><input id="payoutMobile" name="payoutMobile" maxlength="24" type="tel" inputmode="tel" placeholder="07XX XXX XXX"></div>
+          <div class="field"><label for="mobileCompany">Mobile Company Name <span class="required">*</span></label><select id="mobileCompany" name="mobileCompany"><option value="">Choose provider</option><option>M-Pesa</option><option>Mixx by Yas</option><option>Airtel Money</option><option>HaloPesa</option><option>Other</option></select></div>
+        </div>
+      </div>
+      <div class="inline-note"><span class="circle">i</span><span>Bank or mobile payout details are used for preparing your application paperwork. This is not a payment or checkout form. Do not enter a PIN, OTP or password.</span></div>
+    </section>
+    <div class="bottom">
+      <label class="consent"><input type="checkbox" id="consent" name="consent" required><span>I confirm the information provided is accurate and agree to have these details sent securely to Achievers Office for preparing the application documents explained to me.</span></label>
+      <input class="honeypot" name="company_website" tabindex="-1" autocomplete="off">
+      <div class="action-line">
+        <span class="footnote">Required fields are marked *. The office will complete the remaining sections.</span>
+        <button class="btn" id="submitBtn" type="submit">Submit Application <span aria-hidden="true">→</span></button>
+      </div>
+      <p class="status" id="status" role="status" aria-live="polite"></p>
+    </div>
+  </form>
+  <div class="footer">ACHIEVERS CLUB TANZANIA · APPLICATION RECORD</div>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const form=document.getElementById('application');
+  const status=document.getElementById('status');
+  const submit=document.getElementById('submitBtn');
+  const eft=document.getElementById('eftFields');
+  const mobile=document.getElementById('mobileFields');
+  const fields={
+    eft:['bankName','accountName','accountNo','branchCode','branchName'],
+    mobile:['payoutMobile','mobileCompany']
+  };
+  const setFields=()=>{
+    const method=form.querySelector('input[name="paymentMethod"]:checked')?.value||'';
+    eft.hidden=method!=='eft';mobile.hidden=method!=='mobile';
+    for(const [type,ids] of Object.entries(fields)){
+      ids.forEach(id=>{
+        const el=document.getElementById(id);
+        el.required=method===type;
+        el.disabled=method!==type;
+      });
+    }
+    form.querySelectorAll('input[name="accountType"]').forEach(el=>{el.disabled=method!=='eft';el.required=method==='eft';});
+  };
+  form.querySelectorAll('input[name="paymentMethod"]').forEach(el=>el.addEventListener('change',setFields));
+  setFields();
+  const say=(message,error=false)=>{status.textContent=message;status.classList.toggle('error',error)};
+  document.querySelectorAll('input[type="date"]').forEach(el=>{el.max=new Date().toISOString().slice(0,10)});
+  form.addEventListener('submit',async e=>{
+    e.preventDefault();
+    if(!form.reportValidity())return;
+    if(form.elements.company_website.value)return;
+    const data=Object.fromEntries(new FormData(form).entries());
+    delete data.company_website;
+    delete data.consent;
+    const phone=String(data.mobile||'').replace(/\D/g,'');
+    if(phone.length<9||phone.length>15){document.getElementById('mobile').setCustomValidity('Enter a valid mobile number');form.reportValidity();return;}
+    const p=String(data.payoutMobile||'').replace(/\D/g,'');
+    if(data.paymentMethod==='mobile'&&(p.length<9||p.length>15)){
+      document.getElementById('payoutMobile').setCustomValidity('Enter a valid mobile number');form.reportValidity();return;
+    }
+    submit.disabled=true;
+    say('Submitting your application securely to Achievers Office…');
+    const controller=new AbortController();
+    const timeout=setTimeout(()=>controller.abort(),25000);
+    try{
+      const response=await fetch('/api/achievers-application',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify(data),signal:controller.signal
+      });
+      let result={};
+      try{result=await response.json()}catch(_){}
+      if(!response.ok||!result.ok)throw Error(result.message||'Could not submit your application.');
+      say('Application submitted successfully. Achievers Office will complete the remaining sections.');
+      form.reset();
+      setFields();
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(error){
+      say(error?.message==='The operation was aborted.'?'Connection timed out. Please try again.':
+        String(error?.message||'Unable to submit. Please try again.'),true);
+    }finally{clearTimeout(timeout);submit.disabled=false;}
+  });
+  for(const id of ['mobile','payoutMobile']){
+    document.getElementById(id).addEventListener('input',e=>e.target.setCustomValidity(''));
+  }
+})();
+</script>
+</body>
+</html>
