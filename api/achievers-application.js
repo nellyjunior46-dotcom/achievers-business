@@ -9,7 +9,7 @@
  *   RESEND_FROM_EMAIL       - verified email sender, e.g. forms@your-domain.tld
  *
  * Place the exact 2-page NeoLife 289 fillable PDF uploaded by Achievers in
- * assets/tanzania-application-form.pdf, never expose its PDF URL in the
+ * api/_private/tanzania-application-form.pdf, never expose its PDF URL in the
  * applicant-facing site. The form is filled SERVER-SIDE; the applicant receives
  * no branded PDF and cannot download the partially completed official form.
  *
@@ -33,7 +33,7 @@ const dateText=(value)=>{
 const phoneOk=(p)=>{const d=p.replace(/\D/g,'');return d.length>=9&&d.length<=15};
 const emailOk=(a)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)&&a.length<=180;
 const validText=(a,b)=>a.length>=b&&a.length<=180;
-const frontFormPath=path.join(process.cwd(),'assets','tanzania-application-form.pdf');
+const frontFormPath=path.join(__dirname,'_private','tanzania-application-form.pdf');
 
 function isReady(){
   return Boolean(process.env.ACHIEVERS_OFFICE_EMAIL
