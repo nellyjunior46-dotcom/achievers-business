@@ -155,6 +155,14 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
   const form=document.getElementById('application');
   const status=document.getElementById('status');
   const submit=document.getElementById('submitBtn');
+  // Do not accept sensitive data until the office PDF and email backend are ready.
+  submit.disabled=true;
+  fetch('/api/achievers-application',{cache:'no-store'})
+    .then(r=>r.ok?r.json():Promise.reject(new Error('Service unavailable')))
+    .then(data=>{
+      if(data.ready){submit.disabled=false;return;}
+      say('Applications are being prepared by Achievers Office. Online submission is not available yet.',true);
+    }).catch(()=>say('Online application submission is temporarily unavailable.',true));
   const eft=document.getElementById('eftFields');
   const mobile=document.getElementById('mobileFields');
   const fields={
@@ -183,7 +191,7 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
     if(form.elements.company_website.value)return;
     const data=Object.fromEntries(new FormData(form).entries());
     delete data.company_website;
-    delete data.consent;
+    data.consent=document.getElementById('consent').checked;
     const phone=String(data.mobile||'').replace(/\D/g,'');
     if(phone.length<9||phone.length>15){document.getElementById('mobile').setCustomValidity('Enter a valid mobile number');form.reportValidity();return;}
     const p=String(data.payoutMobile||'').replace(/\D/g,'');
@@ -209,7 +217,13 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
     }catch(error){
       say(error?.message==='The operation was aborted.'?'Connection timed out. Please try again.':
         String(error?.message||'Unable to submit. Please try again.'),true);
-    }finally{clearTimeout(timeout);submit.disabled=false;}
+    }finally{
+      clearTimeout(timeout);
+      fetch('/api/achievers-application',{cache:'no-store'})
+        .then(r=>r.ok?r.json():{ready:false})
+        .then(data=>{submit.disabled=!data.ready})
+        .catch(()=>{submit.disabled=true});
+    }
   });
   for(const id of ['mobile','payoutMobile']){
     document.getElementById(id).addEventListener('input',e=>e.target.setCustomValidity(''));
