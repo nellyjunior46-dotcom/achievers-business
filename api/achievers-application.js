@@ -104,7 +104,7 @@ function cleanForm(body){
   ];
   for(const key of allowed){input[key]=text(raw[key],key==='deliveryAddress'?240:180);}
   if(text(raw.company_website))return {valid:false};
-  const valid=validText(input.surname,2)&&validText(input.firstNames,2)
+  const valid=raw.consent===true&&validText(input.surname,2)&&validText(input.firstNames,2)
     &&validText(input.applicantId,4)&&!!dateText(input.dateOfBirth)
     &&emailOk(input.email)&&phoneOk(input.mobile)
     &&(input.partnerEmail===''||emailOk(input.partnerEmail))
