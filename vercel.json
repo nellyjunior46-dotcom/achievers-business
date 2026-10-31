@@ -1,0 +1,7 @@
+{
+  "functions": {
+    "api/achievers-application.js": {
+      "includeFiles": "api/_private/**"
+    }
+  }
+}
