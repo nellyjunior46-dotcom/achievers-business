@@ -16,9 +16,9 @@
  * Office-only / sponsor / Kit Code / signatures remain empty.
  * Never treat this request as an electronic signature or completed registration.
  */
-const fs=require('fs');
-const path=require('path');
 const {PDFDocument,StandardFonts}=require('pdf-lib');
+const {head,get}=require('@vercel/blob');
+const {Readable}=require('node:stream');
 
 const ALLOWED_PAYMENT=['eft','mobile'];
 const MAX_JSON_SIZE=16000;
@@ -33,13 +33,25 @@ const dateText=(value)=>{
 const phoneOk=(p)=>{const d=p.replace(/\D/g,'');return d.length>=9&&d.length<=15};
 const emailOk=(a)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)&&a.length<=180;
 const validText=(a,b)=>a.length>=b&&a.length<=180;
-const frontFormPath=path.join(__dirname,'_private','tanzania-application-form.pdf');
-
-function isReady(){
-  return Boolean(process.env.ACHIEVERS_OFFICE_EMAIL
-    &&process.env.RESEND_API_KEY
-    &&process.env.RESEND_FROM_EMAIL
-    &&fs.existsSync(frontFormPath));
+const TEMPLATE_PATH='templates/application-form-289.pdf';
+async function isReady(){
+  if(!(process.env.ACHIEVERS_OFFICE_EMAIL&&process.env.RESEND_API_KEY
+    &&process.env.RESEND_FROM_EMAIL&&process.env.BLOB_READ_WRITE_TOKEN))return false;
+  try {
+    const doc=await head(TEMPLATE_PATH,{access:'private'});
+    return Boolean(doc?.pathname===TEMPLATE_PATH);
+  } catch { return false; }
+}
+async function loadOfficialTemplate(){
+  const response=await get(TEMPLATE_PATH,{access:'private',useCache:false});
+  if(response?.statusCode!==200||!response.stream)throw new Error('Missing private PDF template');
+  const chunks=[];let total=0;
+  for await(const chunk of Readable.fromWeb(response.stream)){
+    total+=chunk.length;
+    if(total>800000)throw new Error('Private PDF template is too large');
+    chunks.push(chunk);
+  }
+  return Buffer.concat(chunks);
 }
 function sendJSON(res,status,body){
   res.status(status).setHeader('Content-Type','application/json; charset=utf-8');
@@ -47,7 +59,7 @@ function sendJSON(res,status,body){
   return res.end(JSON.stringify(body));
 }
 async function fillOfficialPDF(data){
-  const pdf=await PDFDocument.load(fs.readFileSync(frontFormPath));
+  const pdf=await PDFDocument.load(await loadOfficialTemplate());
   const form=pdf.getForm();
   const font=await pdf.embedFont(StandardFonts.Helvetica);
   const fields=[
@@ -129,7 +141,7 @@ function cleanForm(body){
 module.exports=async function handler(req,res){
   res.setHeader('X-Content-Type-Options','nosniff');
   res.setHeader('Cache-Control','no-store');
-  if(req.method==='GET')return sendJSON(res,200,{ready:isReady()});
+  if(req.method==='GET')return sendJSON(res,200,{ready:await isReady()});
   if(req.method!=='POST')return sendJSON(res,405,{ok:false,message:'Method not allowed.'});
   const origin=req.headers.origin||'';
   const allowedOrigins=[
@@ -139,7 +151,7 @@ module.exports=async function handler(req,res){
   if(origin && !allowedOrigins.includes(origin))return sendJSON(res,403,{ok:false,message:'Invalid origin.'});
   const length=Number(req.headers['content-length']||0);
   if(length>MAX_JSON_SIZE)return sendJSON(res,413,{ok:false,message:'Form data too large.'});
-  if(!isReady())return sendJSON(res,503,{ok:false,message:'Application submission is being configured by Achievers Office. Please contact the office.'});
+  if(!(await isReady()))return sendJSON(res,503,{ok:false,message:'Application submission is being configured by Achievers Office. Please contact the office.'});
   const {valid,input}=cleanForm(req.body);
   if(!valid)return sendJSON(res,400,{ok:false,message:'Please check the application fields and try again.'});
   // Do not log raw applicant data or PDF bytes.
