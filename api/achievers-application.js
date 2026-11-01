@@ -174,23 +174,23 @@ function verifyPaymentToken(token){
     return {name:text(data.name,160),email:text(data.email),mobile:text(data.mobile)};
   }catch(_){return null;}
 }
-async function notifyWednesdayChoice(req,res){
+async function notifyWinnersDaysChoice(req,res){
   if(!(process.env.RESEND_API_KEY&&process.env.RESEND_FROM_EMAIL)){
     return sendJSON(res,503,{ok:false,message:'Payment preference notifications are unavailable.'});
   }
-  if(req.body?.choice!=='wednesday')return sendJSON(res,400,{ok:false,message:'Invalid payment choice.'});
+  if(req.body?.choice!=='winners_days')return sendJSON(res,400,{ok:false,message:'Invalid payment choice.'});
   const applicant=verifyPaymentToken(req.body?.token);
   if(!applicant)return sendJSON(res,403,{ok:false,message:'This application confirmation has expired. Please contact Achievers Office.'});
   try{
     const details=[
       'Achievers Office,',
       '',
-      'An applicant who submitted the official application has selected PAY ON WEDNESDAY.',
+      'An applicant who submitted the official application has selected PAY AT WINNERS DAYS.',
       '',
       'Applicant: '+applicant.name,
       'Mobile / WhatsApp: '+applicant.mobile,
       'Email: '+applicant.email,
-      'Payment intention: Pay on Wednesday',
+      'Payment intention: Pay at Winners Days',
       '',
       'The completed application PDF was sent in the original application email.',
       'This is a payment intention only; payment has NOT been received or confirmed.'
@@ -201,12 +201,12 @@ async function notifyWednesdayChoice(req,res){
       body:JSON.stringify({
         from:process.env.RESEND_FROM_EMAIL,
         to:[OFFICE_EMAIL],
-        subject:'Achievers - Pay on Wednesday - '+applicant.name,
+        subject:'Achievers - Pay at Winners Days - '+applicant.name,
         text:details
       })
     });
     if(!response.ok)return sendJSON(res,502,{ok:false,message:'Could not notify Achievers Office. Please try again.'});
-    return sendJSON(res,200,{ok:true,message:'Achievers Office has been informed that you plan to pay on Wednesday.'});
+    return sendJSON(res,200,{ok:true,message:'Achievers Office has been informed that you plan to pay at Winners Days.'});
   }catch(_){
     return sendJSON(res,500,{ok:false,message:'Unable to save your payment preference. Please try again.'});
   }
@@ -224,7 +224,7 @@ module.exports=async function handler(req,res){
   if(origin && !allowedOrigins.includes(origin))return sendJSON(res,403,{ok:false,message:'Invalid origin.'});
   const length=Number(req.headers['content-length']||0);
   if(length>MAX_JSON_SIZE)return sendJSON(res,413,{ok:false,message:'Form data too large.'});
-  if(req.body?.action==='payment-choice')return notifyWednesdayChoice(req,res);
+  if(req.body?.action==='payment-choice')return notifyWinnersDaysChoice(req,res);
   if(!(await isReady()))return sendJSON(res,503,{ok:false,message:'Application submission is being configured by Achievers Office. Please contact the office.'});
   const {valid,input}=cleanForm(req.body);
   if(!valid)return sendJSON(res,400,{ok:false,message:'Please check the application fields and try again.'});

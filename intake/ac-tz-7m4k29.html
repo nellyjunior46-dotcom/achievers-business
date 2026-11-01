@@ -172,11 +172,11 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
       <div class="payment-choices" id="paymentChoices">
         <a class="payment-choice payment-choice-now" id="payNowLink" target="_blank" rel="noopener noreferrer" href="#">
           <strong>Pay Now ↗</strong>
-          <small>Open WhatsApp for payment guidance and reserve your seat for Wednesday.</small>
+          <small>Open WhatsApp for payment guidance and reserve your seat for Winners Days.</small>
         </a>
-        <button class="payment-choice" id="payWednesdayBtn" type="button">
-          <strong>Pay on Wednesday</strong>
-          <small>Notify Achievers Office that you plan to pay on Wednesday.</small>
+        <button class="payment-choice" id="payWinnersDaysBtn" type="button">
+          <strong>Pay at Winners Days</strong>
+          <small>Notify Achievers Office that you plan to pay at Winners Days.</small>
         </button>
       </div>
       <p class="payment-response" id="paymentResponse" role="status" aria-live="polite"></p>
@@ -193,7 +193,7 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
   const submit=document.getElementById('submitBtn');
   const success=document.getElementById('submissionSuccess');
   const payNow=document.getElementById('payNowLink');
-  const payWednesday=document.getElementById('payWednesdayBtn');
+  const payWinnersDays=document.getElementById('payWinnersDaysBtn');
   const paymentResponse=document.getElementById('paymentResponse');
   const paymentChoices=document.getElementById('paymentChoices');
   let paymentToken='';
@@ -204,22 +204,22 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
   payNow.addEventListener('click',()=>{
     paymentSay('WhatsApp will open with your message ready to send. Please follow the payment instructions there.');
   });
-  payWednesday.addEventListener('click',async()=>{
-    if(!paymentToken)return paymentSay('Please contact Achievers Office to confirm your Wednesday payment plan.',true);
-    payWednesday.disabled=true;
-    paymentSay('Notifying Achievers Office about your Wednesday payment plan…');
+  payWinnersDays.addEventListener('click',async()=>{
+    if(!paymentToken)return paymentSay('Please contact Achievers Office to confirm your Winners Days payment plan.',true);
+    payWinnersDays.disabled=true;
+    paymentSay('Notifying Achievers Office about your Winners Days payment plan…');
     try{
       const response=await fetch('/api/achievers-application',{
         method:'POST',
         headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({action:'payment-choice',choice:'wednesday',token:paymentToken})
+        body:JSON.stringify({action:'payment-choice',choice:'winners_days',token:paymentToken})
       });
       const result=await response.json();
       if(!response.ok||!result.ok)throw Error(result.message||'Could not send payment preference.');
       paymentChoices.hidden=true;
-      paymentSay('✓ Achievers Office has been notified that you plan to pay on Wednesday. Thank you!');
+      paymentSay('✓ Achievers Office has been notified that you plan to pay at Winners Days. Thank you!');
     }catch(error){
-      payWednesday.disabled=false;
+      payWinnersDays.disabled=false;
       paymentSay(String(error?.message||'Unable to notify the office. Please try again.'),true);
     }
   });
@@ -284,14 +284,14 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
       const whatsappMessage=[
         'Hello, my name is '+applicantName+'.',
         'I have successfully submitted my Achievers application form.',
-        'I would like to pay right now and reserve my seat for Wednesday.',
+        'I would like to pay right now and reserve my seat for Winners Days.',
         'Please guide me through the payment process.'
       ].join('\n');
       payNow.href='https://wa.me/255673259420?text='+encodeURIComponent(whatsappMessage);
-      payWednesday.disabled=!paymentToken;
+      payWinnersDays.disabled=!paymentToken;
       form.hidden=true;
       success.hidden=false;
-      paymentSay(paymentToken?'':'Your application was received, but the Wednesday notification service is unavailable. You can still contact Achievers Office through WhatsApp.',!paymentToken);
+      paymentSay(paymentToken?'':'Your application was received, but the Winners Days payment notification service is unavailable. You can still contact Achievers Office through WhatsApp.',!paymentToken);
       success.scrollIntoView({behavior:'smooth',block:'start'});
     }catch(error){
       say(error?.message==='The operation was aborted.'?'Connection timed out. Please try again.':
