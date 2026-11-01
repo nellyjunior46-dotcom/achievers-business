@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow,noarchive,nosnippet">
+<meta name="theme-color" content="#f7faf7">
+<title>Achievers Office · Private Document Setup</title>
+<style>
+:root{--ink:#193023;--green:#2f653c;--line:#dde8de;--muted:#637266}
+*{box-sizing:border-box}
+body{margin:0;min-height:100svh;display:grid;place-items:center;padding:24px;background:#f7faf7;color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{width:min(100%,530px);background:#fff;border:1px solid var(--line);border-radius:20px;padding:clamp(24px,5vw,38px);box-shadow:0 20px 60px #223c2110}
+.brand{color:var(--green);font-size:12px;letter-spacing:.14em;font-weight:750}
+h1{font-size:clamp(26px,5vw,34px);letter-spacing:-.045em;line-height:1.15;margin:16px 0 12px}
+p{font-size:14px;line-height:1.65;color:var(--muted)}
+label{display:block;font-size:13px;font-weight:650;margin:23px 0 8px}
+input{width:100%;padding:15px 14px;border-radius:10px;border:1px solid #d5e0d6;outline:0;font:inherit;background:white}
+input:focus{border-color:#367447;box-shadow:0 0 0 3px #3674471c}
+button{cursor:pointer;margin-top:26px;width:100%;min-height:52px;border:0;background:var(--green);color:#fff;border-radius:10px;font-size:14px;font-weight:700}
+button:disabled{opacity:.55;cursor:wait}
+.status{min-height:20px;font-size:13px;margin-top:17px}
+.error{color:#af2920}
+.success{color:#266f39}
+.tip{margin-top:25px;padding:15px;background:#f4f8f4;border-radius:10px;border:1px solid var(--line);font-size:12px;line-height:1.65;color:var(--muted)}
+a{color:var(--green)}
+</style>
+</head>
+<body>
+<main>
+<div class="brand">ACHIEVERS CLUB · AUTHORIZED OFFICE</div>
+<h1>Connect the official application PDF</h1>
+<p>This private setup page accepts only the exact two-page official Tanzania fillable form. The document is stored in protected server storage; applicants cannot download or view it through the Achievers application page.</p>
+<form id="uploader">
+<label for="passcode">Office upload passcode</label>
+<input id="passcode" type="password" autocomplete="off" required placeholder="Enter your private setup passcode">
+<label for="pdf">Original fillable PDF</label>
+<input id="pdf" type="file" accept=".pdf,application/pdf" required>
+<button id="submit" type="submit">Connect PDF to Achievers Form</button>
+</form>
+<p id="status" class="status" role="status" aria-live="polite"></p>
+<div class="tip">
+After connecting, the form will autofill the applicant fields on the official PDF and email it to the configured Achievers office address. This page does not submit any real applicant details.
+</div>
+</main>
+<script>
+(()=>{'use strict';
+const form=document.getElementById('uploader');
+const status=document.getElementById('status');
+const button=document.getElementById('submit');
+function say(text,kind){status.textContent=text;status.className='status '+(kind||'')}
+form.addEventListener('submit',async e=>{
+ e.preventDefault();
+ const file=document.getElementById('pdf').files[0];
+ const passcode=document.getElementById('passcode').value.trim();
+ if(!file||!passcode)return;
+ if(file.size>300000){say('Please select the original Tanzania PDF (maximum 300 KB).','error');return}
+ button.disabled=true;say('Checking and securing the official template…');
+ try{
+  const base64=await new Promise((resolve,reject)=>{
+   const reader=new FileReader();
+   reader.onerror=()=>reject(new Error('Unable to read the selected PDF.'));
+   reader.onload=()=>resolve(String(reader.result).split(',')[1]||'');
+   reader.readAsDataURL(file);
+  });
+  const response=await fetch('/api/achievers-template-upload',{
+   method:'POST',
+   headers:{'Content-Type':'application/json','X-Admin-Token':passcode},
+   body:JSON.stringify({pdfBase64:base64})
+  });
+  const result=await response.json();
+  if(!response.ok||!result.ok)throw new Error(result.message||'Could not connect PDF.');
+  document.getElementById('passcode').value='';
+  say('PDF connected successfully. Checking applicant submission readiness…','success');
+  const readyResponse=await fetch('/api/achievers-application',{cache:'no-store'});
+  const info=await readyResponse.json();
+  say(info.ready?'Success! The application form is now enabled for secure submissions.':'PDF uploaded, but submission service is not yet ready. Please notify Achievers Office.',info.ready?'success':'error');
+ }catch(error){say(error.message||'Upload failed. Please retry.','error')}
+ finally{button.disabled=false}
+});
+})();
+</script>
+</body>
+</html>
