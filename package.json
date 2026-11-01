@@ -5,7 +5,8 @@
   "description": "Achievers Club Tanzania website and private application processing",
   "dependencies": {
     "pdf-lib": "1.17.1",
-    "@vercel/blob": "^2.3.0"
+    "@vercel/blob": "^2.3.0",
+    "nodemailer": "10.2.1"
   },
   "engines": {
     "node": ">=20"

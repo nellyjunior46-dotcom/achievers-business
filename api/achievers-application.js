@@ -4,9 +4,12 @@
  * Achievers Office application intake.
  *
  * Production requirements (Vercel encrypted environment variables):
- *   ACHIEVERS_OFFICE_EMAIL  - recipient mailbox controlled by Achievers Office
- *   RESEND_API_KEY          - email provider API key (server-side only)
- *   RESEND_FROM_EMAIL       - verified email sender, e.g. forms@your-domain.tld
+ *   GMAIL_SMTP_USER        - approved sender account, e.g. nellyjunior46@gmail.com
+ *   GMAIL_APP_PASSWORD     - Google-generated 16-character app password (secret)
+ *   BLOB_READ_WRITE_TOKEN  - private application PDF storage (secret)
+ *
+ * Gmail SMTP is for small-volume office mail. For high-volume production,
+ * migrate to a verified transactional email provider / Gmail OAuth.
  *
  * Place the exact 2-page NeoLife 289 fillable PDF uploaded by Achievers in
  * api/_private/tanzania-application-form.pdf, never expose its PDF URL in the
@@ -19,6 +22,7 @@
 const {PDFDocument,StandardFonts}=require('pdf-lib');
 const {head,get}=require('@vercel/blob');
 const {Readable}=require('node:stream');
+const nodemailer=require('nodemailer');
 const {createHmac,timingSafeEqual}=require('node:crypto');
 
 // Office destination confirmed for production by Achievers Club.
@@ -39,8 +43,8 @@ const emailOk=(a)=>/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a)&&a.length<=180;
 const validText=(a,b)=>a.length>=b&&a.length<=180;
 const TEMPLATE_PATH='templates/application-form-289.pdf';
 async function isReady(){
-  if(!(process.env.RESEND_API_KEY
-    &&process.env.RESEND_FROM_EMAIL&&process.env.BLOB_READ_WRITE_TOKEN))return false;
+  if(!(process.env.GMAIL_SMTP_USER&&process.env.GMAIL_APP_PASSWORD
+    &&process.env.BLOB_READ_WRITE_TOKEN))return false;
   try {
     const doc=await head(TEMPLATE_PATH,{access:'private'});
     return Boolean(doc?.pathname===TEMPLATE_PATH);
@@ -156,14 +160,14 @@ function signPaymentToken(input){
     created:Date.now()
   };
   const payload=Buffer.from(JSON.stringify(record)).toString('base64url');
-  const signature=createHmac('sha256',process.env.RESEND_API_KEY).update(payload).digest('base64url');
+  const signature=createHmac('sha256',process.env.GMAIL_APP_PASSWORD).update(payload).digest('base64url');
   return payload+'.'+signature;
 }
 function verifyPaymentToken(token){
   if(typeof token!=='string'||token.length>1600)return null;
   const parts=token.split('.');
   if(parts.length!==2||!parts[0]||!parts[1])return null;
-  const expected=createHmac('sha256',process.env.RESEND_API_KEY).update(parts[0]).digest('base64url');
+  const expected=createHmac('sha256',process.env.GMAIL_APP_PASSWORD).update(parts[0]).digest('base64url');
   if(parts[1].length!==expected.length||
       !timingSafeEqual(Buffer.from(parts[1]),Buffer.from(expected)))return null;
   try{
@@ -174,18 +178,50 @@ function verifyPaymentToken(token){
     return {name:text(data.name,160),email:text(data.email),mobile:text(data.mobile)};
   }catch(_){return null;}
 }
-// Do not expose mail-provider payloads: they can contain addresses and private data.
-function mailProviderFailure(response,purpose){
-  console.error('Achievers mail provider rejected '+purpose+'; status='+Number(response.status));
-  if(response.status===403){
-    return {ok:false,code:'EMAIL_SENDER_UNVERIFIED',
-      message:'Application email delivery is not yet authorized for Achievers Office. Please contact the office while email setup is completed.'};
+// Rejected email details may contain identifying information; log codes only.
+function mailProviderFailure(error,purpose){
+  const kind=String(error?.code||'SMTP_ERROR').replace(/[^A-Z0-9_]/g,'').slice(0,40);
+  const smtpCode=Number(error?.responseCode||0);
+  console.error('Achievers Gmail SMTP failed ('+purpose+'): '+kind+' / '+smtpCode);
+  if(kind==='EAUTH'||smtpCode===534||smtpCode===535){
+    return {ok:false,code:'GMAIL_AUTH_FAILED',message:
+      'Achievers Office email authorization needs attention. Please contact the office to complete your application.'};
   }
-  return {ok:false,code:'EMAIL_DELIVERY_FAILED',
-    message:'Achievers Office email delivery is currently unavailable. Please contact the office instead of resubmitting repeatedly.'};
+  return {ok:false,code:'EMAIL_DELIVERY_FAILED',message:
+    'Email delivery to Achievers Office is temporarily unavailable. Please contact the office rather than repeatedly submitting the form.'};
+}
+async function sendOfficeEmail({subject,text,html,attachments,replyTo}){
+  const sender=process.env.GMAIL_SMTP_USER;
+  const password=process.env.GMAIL_APP_PASSWORD;
+  if(!sender||!password)throw Object.assign(new Error('Gmail not configured'),{code:'EAUTH'});
+  const transporter=nodemailer.createTransport({
+    service:'gmail',
+    auth:{user:sender,pass:password.replace(/\s/g,'')},
+    connectionTimeout:15000,
+    greetingTimeout:15000,
+    socketTimeout:25000
+  });
+  try{
+    const info=await transporter.sendMail({
+      from:{name:'Achievers Club Applications',address:sender},
+      to:OFFICE_EMAIL,
+      subject,
+      text,
+      ...(html?{html}:{}),
+      ...(replyTo?{replyTo}:{}),
+      ...(attachments?{attachments}:{})
+    });
+    // A 2xx SMTP response alone is insufficient if this recipient was refused.
+    if(!Array.isArray(info?.accepted)||!info.accepted.some(a=>
+      String(a).toLowerCase()===OFFICE_EMAIL.toLowerCase())){
+      throw Object.assign(new Error('Office recipient was not accepted'),{code:'EREJECTED'});
+    }
+  }finally{
+    transporter.close();
+  }
 }
 async function notifyWinnersDaysChoice(req,res){
-  if(!(process.env.RESEND_API_KEY&&process.env.RESEND_FROM_EMAIL)){
+  if(!(process.env.GMAIL_SMTP_USER&&process.env.GMAIL_APP_PASSWORD)){
     return sendJSON(res,503,{ok:false,message:'Payment preference notifications are unavailable.'});
   }
   if(req.body?.choice!=='winners_days')return sendJSON(res,400,{ok:false,message:'Invalid payment choice.'});
@@ -205,20 +241,14 @@ async function notifyWinnersDaysChoice(req,res){
       'The completed application PDF was sent in the original application email.',
       'This is a payment intention only; payment has NOT been received or confirmed.'
     ].join('\n');
-    const response=await fetch('https://api.resend.com/emails',{
-      method:'POST',
-      headers:{'Authorization':'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        from:process.env.RESEND_FROM_EMAIL,
-        to:[OFFICE_EMAIL],
-        subject:'Achievers - Pay at Winners Days - '+applicant.name,
-        text:details
-      })
+    await sendOfficeEmail({
+      subject:'Achievers - Pay at Winners Days - '+applicant.name,
+      text:details,
+      replyTo:applicant.email
     });
-    if(!response.ok)return sendJSON(res,502,mailProviderFailure(response,'payment preference notification'));
     return sendJSON(res,200,{ok:true,message:'Achievers Office has been informed that you plan to pay at Winners Days.'});
-  }catch(_){
-    return sendJSON(res,500,{ok:false,message:'Unable to save your payment preference. Please try again.'});
+  }catch(error){
+    return sendJSON(res,502,mailProviderFailure(error,'payment preference notification'));
   }
 }
 module.exports=async function handler(req,res){
@@ -244,18 +274,15 @@ module.exports=async function handler(req,res){
     const stamp=new Date().toISOString().replace(/[^\d]/g,'').slice(0,14);
     const safeName=(input.surname+'-'+input.firstNames).replace(/[^a-zA-Z0-9-]+/g,'-').slice(0,55);
     const filename='Achievers-Application-'+safeName+'-'+stamp+'.pdf';
-    const response=await fetch('https://api.resend.com/emails',{
-      method:'POST',headers:{'Authorization':'Bearer '+process.env.RESEND_API_KEY,'Content-Type':'application/json'},
-      body:JSON.stringify({
-        from:process.env.RESEND_FROM_EMAIL,
-        to:[OFFICE_EMAIL],
+    try{
+      await sendOfficeEmail({
         subject:'Achievers Application - '+input.surname+' '+input.firstNames,
-        html:'<p>Achievers Office,</p><p>A new applicant has submitted their details. The attached official application form contains the applicant and payout sections. Please download and print the PDF, then complete Kit Code, office and sponsor details manually as required.</p><p>No application has been forwarded to any external organization.</p>',
-        attachments:[{filename,content:pdf.toString('base64')}]
-      })
-    });
-    if(!response.ok){
-      return sendJSON(res,502,mailProviderFailure(response,'official application PDF'));
+        text:'Achievers Office,\n\nA new applicant has submitted their details. The attached official application form contains the applicant and payout sections. Please download and print the PDF, then complete Kit Code, office and sponsor details manually as required.\n\nNo application has been forwarded to any external organization.',
+        attachments:[{filename,content:pdf,contentType:'application/pdf'}],
+        replyTo:input.email
+      });
+    }catch(error){
+      return sendJSON(res,502,mailProviderFailure(error,'official application PDF'));
     }
     return sendJSON(res,200,{ok:true,message:'Application received by Achievers Office.',paymentToken:signPaymentToken(input)});
   }catch(error){
