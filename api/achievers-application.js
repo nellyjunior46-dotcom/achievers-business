@@ -174,6 +174,16 @@ function verifyPaymentToken(token){
     return {name:text(data.name,160),email:text(data.email),mobile:text(data.mobile)};
   }catch(_){return null;}
 }
+// Do not expose mail-provider payloads: they can contain addresses and private data.
+function mailProviderFailure(response,purpose){
+  console.error('Achievers mail provider rejected '+purpose+'; status='+Number(response.status));
+  if(response.status===403){
+    return {ok:false,code:'EMAIL_SENDER_UNVERIFIED',
+      message:'Application email delivery is not yet authorized for Achievers Office. Please contact the office while email setup is completed.'};
+  }
+  return {ok:false,code:'EMAIL_DELIVERY_FAILED',
+    message:'Achievers Office email delivery is currently unavailable. Please contact the office instead of resubmitting repeatedly.'};
+}
 async function notifyWinnersDaysChoice(req,res){
   if(!(process.env.RESEND_API_KEY&&process.env.RESEND_FROM_EMAIL)){
     return sendJSON(res,503,{ok:false,message:'Payment preference notifications are unavailable.'});
@@ -205,7 +215,7 @@ async function notifyWinnersDaysChoice(req,res){
         text:details
       })
     });
-    if(!response.ok)return sendJSON(res,502,{ok:false,message:'Could not notify Achievers Office. Please try again.'});
+    if(!response.ok)return sendJSON(res,502,mailProviderFailure(response,'payment preference notification'));
     return sendJSON(res,200,{ok:true,message:'Achievers Office has been informed that you plan to pay at Winners Days.'});
   }catch(_){
     return sendJSON(res,500,{ok:false,message:'Unable to save your payment preference. Please try again.'});
@@ -245,8 +255,7 @@ module.exports=async function handler(req,res){
       })
     });
     if(!response.ok){
-      // Do not disclose provider details or applicant data in HTTP response.
-      return sendJSON(res,502,{ok:false,message:'Could not deliver the application to Achievers Office. Please try again.'});
+      return sendJSON(res,502,mailProviderFailure(response,'official application PDF'));
     }
     return sendJSON(res,200,{ok:true,message:'Application received by Achievers Office.',paymentToken:signPaymentToken(input)});
   }catch(error){
