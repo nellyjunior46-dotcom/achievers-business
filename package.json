@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "description": "Achievers Club Tanzania website and private application processing",
   "dependencies": {
-    "pdf-lib": "1.17.1"
+    "pdf-lib": "1.17.1",
+    "@vercel/blob": "^2.3.0"
   },
   "engines": {
     "node": ">=20"
