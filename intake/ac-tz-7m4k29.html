@@ -56,6 +56,22 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
 .btn:hover{background:#24522e}.btn:disabled{opacity:.5;cursor:not-allowed}
 .status{font-size:13px;margin:16px 0 0;color:#48624e;line-height:1.7}
 .status.error{color:var(--err)}
+[hidden]{display:none!important}
+.post-submit{max-width:680px;margin:40px auto 55px;text-align:center;border:1px solid var(--line);border-radius:24px;padding:44px 32px;background:var(--subtle);box-shadow:0 16px 45px rgba(35,70,42,.06)}
+.post-submit .checkmark{width:68px;height:68px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#fff;font-size:32px;margin:0 auto 24px}
+.post-submit h2{font-size:clamp(27px,4.5vw,37px);letter-spacing:-.04em;margin:0 0 13px;line-height:1.13}
+.post-submit p{color:var(--soft);font-size:14px;line-height:1.7;margin:0 auto 28px;max-width:550px}
+.post-submit h3{font-size:19px;letter-spacing:-.025em;margin:27px 0 17px}
+.payment-choices{display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:left}
+.payment-choice{display:flex;flex-direction:column;gap:7px;text-align:left;min-height:112px;padding:20px;border-radius:16px;border:1px solid #d3e2d3;background:#fff;color:var(--ink);text-decoration:none;transition:transform .2s,border .2s,box-shadow .2s;cursor:pointer}
+.payment-choice:hover{border-color:var(--green);box-shadow:0 10px 25px rgba(35,70,42,.08);transform:translateY(-2px)}
+.payment-choice strong{font-size:16px;font-weight:700}.payment-choice small{font-size:12px;color:var(--soft);line-height:1.5}
+.payment-choice-now{background:var(--green);color:#fff}.payment-choice-now small{color:#e3eee4}
+.payment-choice-now:hover{background:#23552f;color:#fff}
+.payment-response{margin-top:20px!important;margin-bottom:0!important;min-height:22px}
+.payment-response.error{color:var(--err)}
+.post-submit .disclaimer{font-size:11.5px;margin:20px auto 0;color:#7d897f}
+@media(max-width:640px){.post-submit{padding:32px 20px}.payment-choices{grid-template-columns:1fr}.payment-choice{min-height:95px}}
 .footer{padding:26px 0 0;margin-top:32px;border-top:1px solid var(--line);font-size:11px;color:#9aa69c}
 .honeypot{position:absolute!important;left:-10000px!important;opacity:0!important;height:1px!important;width:1px!important;pointer-events:none!important}
 @media(max-width:640px){.page{width:calc(100% - 32px);padding:31px 0 48px}.top{padding-bottom:22px}.grid{grid-template-columns:1fr;gap:16px}.full{grid-column:auto}.form-section{padding:29px 0}.section-head h2{font-size:20px}.action-line{flex-direction:column-reverse;align-items:stretch}.btn{width:100%}.footnote{text-align:center;max-width:none}.option-content{padding:15px}}
@@ -147,6 +163,26 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
       <p class="status" id="status" role="status" aria-live="polite"></p>
     </div>
   </form>
+  <section class="post-submit" id="submissionSuccess" hidden aria-labelledby="submissionSuccessTitle">
+    <div class="checkmark" aria-hidden="true">✓</div>
+    <h2 id="submissionSuccessTitle">Application Submitted Successfully!</h2>
+    <p>Your application has been sent to Achievers Office. Thank you for completing the form.</p>
+    <div id="paymentPrompt">
+      <h3>How would you like to make your payment?</h3>
+      <div class="payment-choices" id="paymentChoices">
+        <a class="payment-choice payment-choice-now" id="payNowLink" target="_blank" rel="noopener noreferrer" href="#">
+          <strong>Pay Now ↗</strong>
+          <small>Open WhatsApp for payment guidance and reserve your seat for Wednesday.</small>
+        </a>
+        <button class="payment-choice" id="payWednesdayBtn" type="button">
+          <strong>Pay on Wednesday</strong>
+          <small>Notify Achievers Office that you plan to pay on Wednesday.</small>
+        </button>
+      </div>
+      <p class="payment-response" id="paymentResponse" role="status" aria-live="polite"></p>
+      <p class="disclaimer">Your application is submitted, but your seat is not confirmed until payment has been arranged.</p>
+    </div>
+  </section>
   <div class="footer">ACHIEVERS CLUB TANZANIA · APPLICATION RECORD</div>
 </main>
 <script>
@@ -155,6 +191,38 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
   const form=document.getElementById('application');
   const status=document.getElementById('status');
   const submit=document.getElementById('submitBtn');
+  const success=document.getElementById('submissionSuccess');
+  const payNow=document.getElementById('payNowLink');
+  const payWednesday=document.getElementById('payWednesdayBtn');
+  const paymentResponse=document.getElementById('paymentResponse');
+  const paymentChoices=document.getElementById('paymentChoices');
+  let paymentToken='';
+  const paymentSay=(message,error=false)=>{
+    paymentResponse.textContent=message;
+    paymentResponse.classList.toggle('error',error);
+  };
+  payNow.addEventListener('click',()=>{
+    paymentSay('WhatsApp will open with your message ready to send. Please follow the payment instructions there.');
+  });
+  payWednesday.addEventListener('click',async()=>{
+    if(!paymentToken)return paymentSay('Please contact Achievers Office to confirm your Wednesday payment plan.',true);
+    payWednesday.disabled=true;
+    paymentSay('Notifying Achievers Office about your Wednesday payment plan…');
+    try{
+      const response=await fetch('/api/achievers-application',{
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({action:'payment-choice',choice:'wednesday',token:paymentToken})
+      });
+      const result=await response.json();
+      if(!response.ok||!result.ok)throw Error(result.message||'Could not send payment preference.');
+      paymentChoices.hidden=true;
+      paymentSay('✓ Achievers Office has been notified that you plan to pay on Wednesday. Thank you!');
+    }catch(error){
+      payWednesday.disabled=false;
+      paymentSay(String(error?.message||'Unable to notify the office. Please try again.'),true);
+    }
+  });
   // Do not accept sensitive data until the office PDF and email backend are ready.
   submit.disabled=true;
   fetch('/api/achievers-application',{cache:'no-store'})
@@ -210,10 +278,21 @@ input::placeholder,textarea::placeholder{color:#a0a9a1}
       let result={};
       try{result=await response.json()}catch(_){}
       if(!response.ok||!result.ok)throw Error(result.message||'Could not submit your application.');
-      say('Application submitted successfully. Achievers Office will complete the remaining sections.');
-      form.reset();
-      setFields();
-      window.scrollTo({top:0,behavior:'smooth'});
+      // The official PDF must be successfully delivered before this next step.
+      paymentToken=String(result.paymentToken||'');
+      const applicantName=[data.firstNames,data.surname].filter(Boolean).join(' ');
+      const whatsappMessage=[
+        'Hello, my name is '+applicantName+'.',
+        'I have successfully submitted my Achievers application form.',
+        'I would like to pay right now and reserve my seat for Wednesday.',
+        'Please guide me through the payment process.'
+      ].join('\n');
+      payNow.href='https://wa.me/255673259420?text='+encodeURIComponent(whatsappMessage);
+      payWednesday.disabled=!paymentToken;
+      form.hidden=true;
+      success.hidden=false;
+      paymentSay(paymentToken?'':'Your application was received, but the Wednesday notification service is unavailable. You can still contact Achievers Office through WhatsApp.',!paymentToken);
+      success.scrollIntoView({behavior:'smooth',block:'start'});
     }catch(error){
       say(error?.message==='The operation was aborted.'?'Connection timed out. Please try again.':
         String(error?.message||'Unable to submit. Please try again.'),true);
